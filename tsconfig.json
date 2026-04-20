@@ -1,0 +1,24 @@
+{
+	"compilerOptions": {
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"strict": true,
+		"moduleResolution": "bundler",
+		"allowSyntheticDefaultImports": true,
+		"isolatedModules": true,
+		"lib": ["esnext"],
+		"module": "esnext",
+		"noEmit": true,
+		"target": "esnext",
+		"types": [
+			"node",
+			"@atcute/atproto",
+			"@atcute/bluesky",
+			"@atcute/lexicon-community"
+		]
+	},
+	"include": ["./src/**/*.ts", "./test/**/*.ts"],
+	"exclude": ["node_modules/**"]
+}

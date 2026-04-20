@@ -1,0 +1,41 @@
+{
+	"name": "guild-atproto",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"lint": "prettier --check . && oxlint --type-aware && tsc --noEmit",
+		"fix": "prettier --write . && oxlint --type-aware --fix",
+		"start": "tsx src/index.ts",
+		"dev": "tsx src/index.ts"
+	},
+	"packageManager": "pnpm@10.30.3",
+	"dependencies": {
+		"@atcute/atproto": "^3.1.11",
+		"@atcute/bluesky": "^3.3.3",
+		"@atcute/client": "^4.2.1",
+		"@atcute/identity-resolver": "^1.2.0",
+		"@atcute/identity-resolver-node": "^1.0.0",
+		"@atcute/lexicon-community": "^1.0.0",
+		"@atcute/lexicons": "^1.0.0",
+		"@atcute/oauth-node-client": "^1.0.0",
+		"@clack/prompts": "^1.2.0",
+		"@hono/node-server": "^1.19.14",
+		"dequal": "^2.0.3",
+		"hono": "^4.7.0"
+	},
+	"devDependencies": {
+		"@e18e/eslint-plugin": "^0.2.0",
+		"@rlly/pedantic": "^0.2.0",
+		"@types/node": "^25.6.0",
+		"oxlint": "^1.50.0",
+		"oxlint-tsgolint": "^0.15.0",
+		"prettier": "^3.8.3",
+		"tsx": "^4.21.0",
+		"typescript": "^6.0.3"
+	},
+	"volta": {
+		"node": "24.14.0",
+		"pnpm": "10.30.3"
+	}
+}
