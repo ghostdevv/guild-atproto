@@ -15,11 +15,7 @@
 		"verbatimModuleSyntax": true,
 		"allowImportingTsExtensions": true,
 		"erasableSyntaxOnly": true,
-		"types": [
-			"node",
-			"@atcute/atproto",
-			"@atcute/lexicon-community"
-		]
+		"types": ["node", "@atcute/atproto", "@atcute/lexicon-community"]
 	},
 	"include": ["./src/**/*.ts", "./test/**/*.ts"],
 	"exclude": ["node_modules/**"]

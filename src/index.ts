@@ -1,9 +1,18 @@
-import { intro, outro, tasks, group, text } from '@clack/prompts';
+import { intro, outro, group, text, spinner } from '@clack/prompts';
 import { type Handle, isHandle } from '@atcute/lexicons/syntax';
-import { fetchGuildEvents, selectEvents } from './guild.ts';
-import { syncEvents } from './sync.ts';
-import { exit } from './prompts.ts';
+import { exit, selectEvents } from './prompts.ts';
+import { fetchGuildEvents } from './guild.ts';
 import { login } from './oauth.ts';
+import { dequal } from 'dequal';
+import {
+	guildEventToAtmosphere,
+	fetchAtmoEvents,
+	isOnGuild,
+} from './at-events.ts';
+import {
+	ComAtprotoRepoCreateRecord,
+	ComAtprotoRepoPutRecord,
+} from '@atcute/atproto';
 
 intro('Guild ATProto Sync');
 
@@ -44,20 +53,60 @@ const choices = await group(
 );
 
 const session = await login(choices.handle as Handle);
-const events = await fetchGuildEvents(choices.guildSlug);
-const selectedEvents = await selectEvents(events);
 
-await tasks([
-	{
-		title: 'Syncing events to ATProto',
-		task: async () => {
-			await syncEvents(
-				session.actor,
-				session.client,
-				selectedEvents as typeof events,
-			);
+const atmoEvents = await fetchAtmoEvents(session.client, session.actor);
+const guildEvents = await fetchGuildEvents(choices.guildSlug);
+
+for (const guildEvent of await selectEvents(atmoEvents, guildEvents)) {
+	const s = spinner();
+	s.start(`Syncing ${guildEvent.name}`);
+
+	const existingAtmoEvent = atmoEvents.find((e) => isOnGuild(e, guildEvent));
+	if (!existingAtmoEvent) {
+		const response = await session.client.call(ComAtprotoRepoCreateRecord, {
+			input: {
+				collection: 'community.lexicon.calendar.event',
+				record: guildEventToAtmosphere(guildEvent),
+				repo: session.actor,
+			},
+		});
+
+		if (!response.ok) {
+			s.stop(`Failed to create atmosphere event for ${guildEvent.name}`);
+			process.exit(1);
+		}
+
+		// prettier-ignore
+		s.stop(`Created atmosphere event for ${guildEvent.name} (https://pds.ls/${response.data.uri})`);
+		continue;
+	}
+
+	const newAtmoEvent = guildEventToAtmosphere(guildEvent);
+
+	const { rkey, ...existingAtmoEventWithoutRkey } = existingAtmoEvent;
+	if (dequal(existingAtmoEventWithoutRkey, newAtmoEvent)) {
+		const pdsls = `https://pds.ls/at://${session.actor}/community.lexicon.calendar.event/${rkey}`;
+		s.stop(`No changes needed for ${guildEvent.name} (${pdsls})`);
+		continue;
+	}
+
+	const response = await session.client.call(ComAtprotoRepoPutRecord, {
+		input: {
+			collection: 'community.lexicon.calendar.event',
+			record: newAtmoEvent,
+			repo: session.actor,
+			rkey,
 		},
-	},
-]);
+	});
+
+	if (!response.ok) {
+		s.stop(`Failed to update atmosphere event for ${guildEvent.name}`);
+		process.exit(1);
+	}
+
+	// prettier-ignore
+	s.stop(`Updated atmosphere event for ${guildEvent.name} (https://pds.ls/${response.data.uri})`);
+}
 
 outro('Sync complete!');
+process.exit(0);

@@ -1,6 +1,6 @@
 import type { SessionStore, StoredSession } from '@atcute/oauth-node-client';
-import type { Did, Handle, RecordKey } from '@atcute/lexicons';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import type { Did, Handle } from '@atcute/lexicons';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -72,28 +72,3 @@ class Handles extends Storage<Record<Handle, Did>> {
 const HANDLES_FILE = join(DATA_DIR, 'handles.json');
 
 export const handles = new Handles(HANDLES_FILE, await read(HANDLES_FILE, {}));
-
-interface Mapping {
-	rkey: RecordKey;
-	syncedAt: string;
-}
-
-type MappingsData = Record<string, Mapping>;
-
-class Mappings extends Storage<MappingsData> {
-	get(guildSlug: string) {
-		return this.value[guildSlug];
-	}
-
-	async set(guildSlug: string, rkey: RecordKey) {
-		this.value[guildSlug] = { rkey, syncedAt: new Date().toISOString() };
-		await this.save();
-	}
-}
-
-const MAPPINGS_FILE = join(DATA_DIR, 'mappings.json');
-
-export const mappings = new Mappings(
-	MAPPINGS_FILE,
-	await read(MAPPINGS_FILE, {}),
-);
