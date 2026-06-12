@@ -18,7 +18,6 @@
 		"types": [
 			"node",
 			"@atcute/atproto",
-			"@atcute/bluesky",
 			"@atcute/lexicon-community"
 		]
 	},
