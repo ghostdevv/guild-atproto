@@ -81,9 +81,9 @@ export function guildEventToAtmosphere(event: GuildEvent): AtmoEvent {
 
 	return {
 		$type: 'community.lexicon.calendar.event',
-		createdAt: event.createdAt.toISOString(),
 		name: event.name,
-		description: event.description,
+		description: `> Heads up! You must [register on Guild](${event.fullUrl}) to attend this event __in-person__.\n\n${event.description}`,
+		createdAt: event.createdAt.toISOString(),
 		startsAt: event.startAt,
 		endsAt: event.endAt,
 		mode,
