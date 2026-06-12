@@ -1,9 +1,10 @@
-import type { CommunityLexiconCalendarEvent } from '@atcute/lexicon-community';
+import { CommunityLexiconCalendarEvent } from '@atcute/lexicon-community';
 import { ok, type Client } from '@atcute/client';
-import type { Did } from '@atcute/lexicons';
-import type { GuildEvent } from './types';
+import { is, type Did } from '@atcute/lexicons';
+import type { GuildEvent } from './guild';
 import { mappings } from './storage';
 import { dequal } from 'dequal';
+import { log } from '@clack/prompts';
 
 function mapToCalendarEvent(
 	event: GuildEvent,
@@ -93,8 +94,12 @@ export async function syncEvent(
 		return { action: 'created', rkey };
 	}
 
-	const existingRecord = existingResult.data
-		.value as CommunityLexiconCalendarEvent.Main;
+	const existingRecord = existingResult.data;
+
+	if (!is(CommunityLexiconCalendarEvent.mainSchema, existingRecord)) {
+		log.warn('fetched record does not match schema, skipping completely');
+		return { action: 'skipped', rkey: existingMapping.rkey };
+	}
 
 	if (dequal(existingRecord, record)) {
 		return { action: 'skipped', rkey: existingMapping.rkey };

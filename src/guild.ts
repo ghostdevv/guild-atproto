@@ -1,8 +1,32 @@
 import { spinner, multiselect } from '@clack/prompts';
 import { exit, handleCancel } from './prompts';
-import type { GuildEvent } from './types';
+import * as v from 'valibot';
 
 const GUILD_API_BASE = 'https://guild.host/api/next';
+
+const GuildEventSchema = v.object({
+	id: v.string(),
+	slug: v.string(),
+	prettyUrl: v.string(),
+	fullUrl: v.string(),
+	shortUrl: v.string(),
+	name: v.string(),
+	description: v.string(),
+	startAt: v.string(),
+	endAt: v.string(),
+	timeZone: v.string(),
+	visibility: v.union([v.literal('LISTED'), v.literal('UNLISTED')]),
+	hasVenue: v.boolean(),
+	hasExternalUrl: v.boolean(),
+});
+
+export type GuildEvent = v.InferOutput<typeof GuildEventSchema>;
+
+const EventsResponseSchema = v.object({
+	events: v.object({
+		edges: v.array(v.object({ node: GuildEventSchema })),
+	}),
+});
 
 export async function fetchGuildEvents(slug: string): Promise<GuildEvent[]> {
 	const s = spinner();
@@ -12,15 +36,13 @@ export async function fetchGuildEvents(slug: string): Promise<GuildEvent[]> {
 		const response = await fetch(
 			`${GUILD_API_BASE}/${slug}/events?first=50`,
 		);
+
 		if (!response.ok) {
 			throw new Error(`Failed to fetch events: ${response.statusText}`);
 		}
 
-		const data = (await response.json()) as {
-			events: { edges: { node: GuildEvent }[] };
-		};
-
-		const events = data.events.edges.map((edge) => edge.node);
+		const result = v.parse(EventsResponseSchema, await response.json());
+		const events = result.events.edges.map((edge) => edge.node);
 		s.stop('Events fetched!');
 		return events;
 	} catch (error) {
