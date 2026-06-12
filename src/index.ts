@@ -1,10 +1,9 @@
 import { intro, outro, tasks, group, text } from '@clack/prompts';
 import { type Handle, isHandle } from '@atcute/lexicons/syntax';
 import { fetchGuildEvents, selectEvents } from './guild';
-import { authenticate, restoreSession } from './oauth';
 import { syncEvents } from './sync';
-import { handles } from './storage';
 import { exit } from './prompts';
+import { login } from './oauth';
 
 intro('Guild ATProto Sync');
 
@@ -44,14 +43,8 @@ const choices = await group(
 	{ onCancel: () => exit('Operation cancelled.') },
 );
 
-const handle = choices.handle as Handle;
-const storedDid = handles.get(handle);
-let session = storedDid ? await restoreSession(storedDid) : null;
-session ??= await authenticate(handle);
-await handles.set(handle, session.session.did);
-
+const session = await login(choices.handle as Handle);
 const events = await fetchGuildEvents(choices.guildSlug);
-
 const selectedEvents = await selectEvents(events);
 
 await tasks([
@@ -59,7 +52,7 @@ await tasks([
 		title: 'Syncing events to ATProto',
 		task: async () => {
 			await syncEvents(
-				session.session.did,
+				session.actor,
 				session.client,
 				selectedEvents as typeof events,
 			);
