@@ -63,15 +63,6 @@ export async function fetchAtmoEvents(client: Client, repo: Did) {
 }
 
 export function guildEventToAtmosphere(event: GuildEvent): AtmoEvent {
-	const uris: AtmoEvent['uris'] = [];
-
-	if (event.fullUrl) {
-		uris.push({
-			uri: event.fullUrl as `${string}:${string}`,
-			name: 'Register on Guild',
-		});
-	}
-
 	let mode: AtmoEvent['mode'] = 'community.lexicon.calendar.event#inperson';
 	if (event.hasExternalUrl && !event.hasVenue) {
 		mode = 'community.lexicon.calendar.event#virtual';
@@ -88,11 +79,31 @@ export function guildEventToAtmosphere(event: GuildEvent): AtmoEvent {
 		endsAt: event.endAt,
 		mode,
 		status: 'community.lexicon.calendar.event#scheduled',
-		uris,
-		locations: [],
+		locations: [
+			{
+				$type: 'community.lexicon.calendar.event#uri',
+				name: 'Register on Guild',
+				uri: event.fullUrl,
+			},
+		],
+		uris: [
+			{
+				$type: 'community.lexicon.calendar.event#uri',
+				name: 'Register on Guild',
+				uri: event.fullUrl,
+			},
+		],
 	};
 }
 
 export function isOnGuild(event: AtmoEvent, guildEvent: GuildEvent): boolean {
-	return event.uris?.some((uri) => uri.uri === guildEvent.fullUrl) ?? false;
+	const hasLocation = event.locations?.some(
+		(l) =>
+			l.$type === 'community.lexicon.calendar.event#uri' &&
+			l.uri === guildEvent.fullUrl,
+	);
+
+	const hasURI = event.uris?.some((u) => u.uri === guildEvent.fullUrl);
+
+	return hasLocation ?? hasURI ?? false;
 }

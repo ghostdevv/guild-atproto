@@ -3,9 +3,20 @@ import * as v from 'valibot';
 
 const GUILD_API_BASE = 'https://guild.host/api/next';
 
+const URLSchema = v.rawTransform<string, `https://${string}`>((ctx) => {
+	const url = new URL(ctx.dataset.value);
+
+	if (url.protocol !== 'https:') {
+		ctx.addIssue({ message: 'fullUrl must be a https url' });
+		return ctx.NEVER;
+	}
+
+	return url.toString() as `https://${string}`;
+});
+
 const GuildEventSchema = v.object({
 	slug: v.string(),
-	fullUrl: v.string(),
+	fullUrl: v.pipe(v.string(), URLSchema),
 	name: v.string(),
 	description: v.string(),
 	startAt: v.string(),
