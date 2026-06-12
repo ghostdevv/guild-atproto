@@ -1,6 +1,6 @@
 # Guild <> ATProto Sync
 
-WIP
+A prompts based CLI tool to sync guild events with the atmosphere. Uses the [`community.lexicon.calendar.event`](https://lexicon.garden/lexicon/did:plc:2uwoih2htodskvgocarwv5eq/community.lexicon.calendar.event) lexicon, with an `atmo.rsvp` extension for image support. 
 
 ## Running Locally
 
