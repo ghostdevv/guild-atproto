@@ -1,5 +1,6 @@
 import type { CommunityLexiconCalendarEvent } from '@atcute/lexicon-community';
 import { ok, type Client } from '@atcute/client';
+import type { Did } from '@atcute/lexicons';
 import type { GuildEvent } from './types';
 import { mappings } from './storage';
 import { dequal } from 'dequal';
@@ -39,14 +40,12 @@ function mapToCalendarEvent(
 }
 
 export async function syncEvent(
+	repo: Did,
 	client: Client,
 	event: GuildEvent,
 ): Promise<{ action: 'created' | 'updated' | 'skipped'; rkey?: string }> {
 	const record = mapToCalendarEvent(event);
 	const existingMapping = mappings.get(event.slug);
-	const { did: repo } = await ok(
-		client.get('com.atproto.server.getSession', {}),
-	);
 
 	if (!existingMapping) {
 		const rkey = crypto.randomUUID();
@@ -118,11 +117,12 @@ export async function syncEvent(
 }
 
 export async function syncEvents(
+	repo: Did,
 	client: Client,
 	events: GuildEvent[],
 ): Promise<void> {
 	for (const event of events) {
-		const result = await syncEvent(client, event);
+		const result = await syncEvent(repo, client, event);
 		console.log(
 			`${event.name}: ${result.action}`,
 			result.rkey ? `(${result.rkey})` : '',

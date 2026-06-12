@@ -58,7 +58,11 @@ await tasks([
 	{
 		title: 'Syncing events to ATProto',
 		task: async () => {
-			await syncEvents(session.client, selectedEvents as typeof events);
+			await syncEvents(
+				session.session.did,
+				session.client,
+				selectedEvents as typeof events,
+			);
 		},
 	},
 ]);

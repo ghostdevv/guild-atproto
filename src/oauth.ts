@@ -36,16 +36,6 @@ export function createOAuthClient(port: number): OAuthClient {
 		metadata: {
 			redirect_uris: [`http://127.0.0.1:${port}/callback`],
 			scope: [
-				scope.rpc({
-					lxm: [
-						'com.atproto.server.getSession',
-						'com.atproto.repo.createRecord',
-						'com.atproto.repo.putRecord',
-						'com.atproto.repo.getRecord',
-					],
-					aud: '*',
-				}),
-				scope.identity({ attr: 'handle' }),
 				scope.repo({
 					collection: ['community.lexicon.calendar.event'],
 					action: ['create', 'update', 'delete'],
