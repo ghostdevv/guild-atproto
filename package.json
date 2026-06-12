@@ -4,7 +4,7 @@
 	"version": "0.1.0",
 	"type": "module",
 	"scripts": {
-		"lint": "prettier --check . && oxlint --type-aware && tsc --noEmit",
+		"check": "prettier --check . && oxlint --type-aware && tsc --noEmit",
 		"fix": "prettier --write . && oxlint --type-aware --fix",
 		"start": "tsx src/index.ts",
 		"dev": "tsx src/index.ts"
