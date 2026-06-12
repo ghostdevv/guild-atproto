@@ -1,10 +1,10 @@
 import { CommunityLexiconCalendarEvent } from '@atcute/lexicon-community';
 import { ok, type Client } from '@atcute/client';
 import { is, type Did } from '@atcute/lexicons';
-import type { GuildEvent } from './guild';
-import { mappings } from './storage';
-import { dequal } from 'dequal';
+import type { GuildEvent } from './guild.ts';
+import { mappings } from './storage.ts';
 import { log } from '@clack/prompts';
+import { dequal } from 'dequal';
 
 function mapToCalendarEvent(
 	event: GuildEvent,

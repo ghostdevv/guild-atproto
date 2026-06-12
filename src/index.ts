@@ -1,9 +1,9 @@
 import { intro, outro, tasks, group, text } from '@clack/prompts';
 import { type Handle, isHandle } from '@atcute/lexicons/syntax';
-import { fetchGuildEvents, selectEvents } from './guild';
-import { syncEvents } from './sync';
-import { exit } from './prompts';
-import { login } from './oauth';
+import { fetchGuildEvents, selectEvents } from './guild.ts';
+import { syncEvents } from './sync.ts';
+import { exit } from './prompts.ts';
+import { login } from './oauth.ts';
 
 intro('Guild ATProto Sync');
 

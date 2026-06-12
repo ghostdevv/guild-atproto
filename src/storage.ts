@@ -1,6 +1,6 @@
 import type { SessionStore, StoredSession } from '@atcute/oauth-node-client';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import type { Did, Handle, RecordKey } from '@atcute/lexicons';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -14,10 +14,13 @@ async function read<T>(file: string, fallback: T): Promise<T> {
 }
 
 class Storage<T> {
-	constructor(
-		private readonly file: string,
-		protected value: T,
-	) {}
+	private readonly file;
+	protected value;
+
+	constructor(file: string, value: T) {
+		this.file = file;
+		this.value = value;
+	}
 
 	protected async save() {
 		await writeFile(this.file, JSON.stringify(this.value, null, 2));

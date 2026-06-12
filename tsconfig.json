@@ -12,6 +12,9 @@
 		"module": "esnext",
 		"noEmit": true,
 		"target": "esnext",
+		"verbatimModuleSyntax": true,
+		"allowImportingTsExtensions": true,
+		"erasableSyntaxOnly": true,
 		"types": [
 			"node",
 			"@atcute/atproto",

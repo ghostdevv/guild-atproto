@@ -1,5 +1,5 @@
 import { spinner, multiselect } from '@clack/prompts';
-import { exit, handleCancel } from './prompts';
+import { exit, handleCancel } from './prompts.ts';
 import * as v from 'valibot';
 
 const GUILD_API_BASE = 'https://guild.host/api/next';

@@ -1,7 +1,7 @@
 import { NodeDnsHandleResolver } from '@atcute/identity-resolver-node';
 import type { OAuthSession } from '@atcute/oauth-node-client';
 import type { Did, Handle } from '@atcute/lexicons';
-import { handles, sessions } from './storage';
+import { handles, sessions } from './storage.ts';
 import { log, spinner } from '@clack/prompts';
 import { serve } from '@hono/node-server';
 import { Client } from '@atcute/client';
