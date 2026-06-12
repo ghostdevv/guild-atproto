@@ -1,7 +1,7 @@
 import { intro, outro, tasks, group, text } from '@clack/prompts';
 import { fetchGuildEvents, selectEvents } from './guild';
 import { authenticate, restoreSession } from './oauth';
-import { loadSyncState } from './storage';
+import { loadSyncState, setActor } from './storage';
 import { syncEvents } from './sync';
 import { exit } from './prompts';
 
@@ -44,10 +44,12 @@ const { guildSlug, handle } = await group(
 );
 
 const storedState = await loadSyncState();
-const savedDid = storedState.mappings['__auth_did']?.rkey;
 
-let session = await restoreSession(savedDid);
+let session = storedState.actor
+	? await restoreSession(storedState.actor)
+	: null;
 session ??= await authenticate(handle);
+await setActor(session.session.did);
 
 const events = await fetchGuildEvents(guildSlug);
 
