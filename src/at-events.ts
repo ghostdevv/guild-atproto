@@ -93,6 +93,7 @@ export function guildEventToAtmosphere(event: GuildEvent): AtmoEvent {
 				uri: event.fullUrl,
 			},
 		],
+		rsvpExpected: false,
 	};
 }
 
