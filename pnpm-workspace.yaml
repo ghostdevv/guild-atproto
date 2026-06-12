@@ -1,2 +1,6 @@
-onlyBuiltDependencies:
-    - esbuild
+allowBuilds:
+    esbuild: true
+
+minimumReleaseAgeExclude:
+    - '@atcute/bluesky@4.0.9'
+    - '@atcute/client@5.1.0'
