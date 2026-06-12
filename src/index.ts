@@ -3,10 +3,10 @@ import { type Handle, isHandle } from '@atcute/lexicons/syntax';
 import { exit, selectEvents } from './prompts.ts';
 import { fetchGuildEvents } from './guild.ts';
 import { login } from './oauth.ts';
-import { dequal } from 'dequal';
 import {
 	guildEventToAtmosphere,
 	fetchAtmoEvents,
+	eventsAreEqual,
 	isOnGuild,
 } from './at-events.ts';
 import {
@@ -83,9 +83,8 @@ for (const guildEvent of await selectEvents(atmoEvents, guildEvents)) {
 
 	const newAtmoEvent = guildEventToAtmosphere(guildEvent);
 
-	const { rkey, ...existingAtmoEventWithoutRkey } = existingAtmoEvent;
-	if (dequal(existingAtmoEventWithoutRkey, newAtmoEvent)) {
-		const pdsls = `https://pds.ls/at://${session.actor}/community.lexicon.calendar.event/${rkey}`;
+	if (eventsAreEqual(existingAtmoEvent, newAtmoEvent)) {
+		const pdsls = `https://pds.ls/at://${session.actor}/community.lexicon.calendar.event/${existingAtmoEvent.rkey}`;
 		s.stop(`No changes needed for ${guildEvent.name} (${pdsls})`);
 		continue;
 	}
@@ -93,9 +92,9 @@ for (const guildEvent of await selectEvents(atmoEvents, guildEvents)) {
 	const response = await session.client.call(ComAtprotoRepoPutRecord, {
 		input: {
 			collection: 'community.lexicon.calendar.event',
+			rkey: existingAtmoEvent.rkey,
 			record: newAtmoEvent,
 			repo: session.actor,
-			rkey,
 		},
 	});
 

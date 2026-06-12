@@ -3,6 +3,7 @@ import { ComAtprotoRepoListRecords } from '@atcute/atproto';
 import type { GuildEvent } from './guild.ts';
 import type { Client } from '@atcute/client';
 import { spinner } from '@clack/prompts';
+import { dequal } from 'dequal';
 import {
 	parseResourceUri,
 	type RecordKey,
@@ -107,4 +108,12 @@ export function isOnGuild(event: AtmoEvent, guildEvent: GuildEvent): boolean {
 	const hasURI = event.uris?.some((u) => u.uri === guildEvent.fullUrl);
 
 	return hasLocation ?? hasURI ?? false;
+}
+
+export function eventsAreEqual(
+	before: AtmoEvent & { rkey?: RecordKey },
+	after: AtmoEvent,
+): boolean {
+	const { rkey: _rkey, ...beforeFiltered } = before;
+	return dequal(beforeFiltered, after);
 }
