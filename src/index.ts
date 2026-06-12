@@ -1,15 +1,16 @@
 import { intro, outro, tasks, group, text } from '@clack/prompts';
+import { type Handle, isHandle } from '@atcute/lexicons/syntax';
 import { fetchGuildEvents, selectEvents } from './guild';
 import { authenticate, restoreSession } from './oauth';
-import { loadSyncState, setActor } from './storage';
 import { syncEvents } from './sync';
+import { handles } from './storage';
 import { exit } from './prompts';
 
 intro('Guild ATProto Sync');
 
 const GUILD_SLUG_REGEX = /^[a-z0-9-]+$/;
 
-const { guildSlug, handle } = await group(
+const choices = await group(
 	{
 		guildSlug: () =>
 			text({
@@ -34,7 +35,7 @@ const { guildSlug, handle } = await group(
 						return 'Handle is required';
 					}
 
-					if (!value.includes('.')) {
+					if (!isHandle(value)) {
 						return 'Handle should be like myhandle.npmx.social';
 					}
 				},
@@ -43,15 +44,13 @@ const { guildSlug, handle } = await group(
 	{ onCancel: () => exit('Operation cancelled.') },
 );
 
-const storedState = await loadSyncState();
-
-let session = storedState.actor
-	? await restoreSession(storedState.actor)
-	: null;
+const handle = choices.handle as Handle;
+const storedDid = handles.get(handle);
+let session = storedDid ? await restoreSession(storedDid) : null;
 session ??= await authenticate(handle);
-await setActor(session.session.did);
+await handles.set(handle, session.session.did);
 
-const events = await fetchGuildEvents(guildSlug);
+const events = await fetchGuildEvents(choices.guildSlug);
 
 const selectedEvents = await selectEvents(events);
 

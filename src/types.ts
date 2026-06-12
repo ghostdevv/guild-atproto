@@ -1,5 +1,3 @@
-import type { Did, RecordKey } from '@atcute/lexicons';
-
 export interface GuildEvent {
 	id: string;
 	slug: string;
@@ -15,10 +13,4 @@ export interface GuildEvent {
 	hasVenue: boolean;
 	hasExternalUrl: boolean;
 	venue: null;
-}
-
-export interface SyncState {
-	mappings: Record<string, { rkey: RecordKey; syncedAt: string }>;
-	lastSync: string;
-	actor?: Did;
 }

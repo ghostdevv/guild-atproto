@@ -1,54 +1,96 @@
+import type { SessionStore, StoredSession } from '@atcute/oauth-node-client';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import type { Did, RecordKey } from '@atcute/lexicons';
-import type { SyncState } from './types';
+import type { Did, Handle, RecordKey } from '@atcute/lexicons';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-const STATE_FILE = 'sync-state.json';
 const DATA_DIR = join(import.meta.dirname, '../.data');
+if (!existsSync(DATA_DIR)) await mkdir(DATA_DIR, { recursive: true });
 
-export async function ensureDataDir(): Promise<void> {
-	if (!existsSync(DATA_DIR)) {
-		await mkdir(DATA_DIR, { recursive: true });
+async function read<T>(file: string, fallback: T): Promise<T> {
+	if (!existsSync(file)) return fallback;
+	const contents = await readFile(file, 'utf-8');
+	return JSON.parse(contents);
+}
+
+class Storage<T> {
+	constructor(
+		private readonly file: string,
+		protected value: T,
+	) {}
+
+	protected async save() {
+		await writeFile(this.file, JSON.stringify(this.value, null, 2));
 	}
 }
 
-export async function loadSyncState(): Promise<SyncState> {
-	const statePath = join(DATA_DIR, STATE_FILE);
+type SessionsData = Record<Did, StoredSession>;
 
-	if (!existsSync(statePath)) {
-		return { mappings: {}, lastSync: new Date().toISOString() };
+class Sessions extends Storage<SessionsData> implements SessionStore {
+	get(key: Did) {
+		return this.value[key];
 	}
 
-	const data = await readFile(statePath, 'utf-8');
-	return JSON.parse(data) as SyncState;
+	async set(key: Did, value: StoredSession) {
+		this.value[key] = value;
+		await this.save();
+	}
+
+	async delete(key: Did) {
+		// oxlint-disable-next-line typescript/no-dynamic-delete
+		delete this.value[key];
+		await this.save();
+	}
+
+	async clear() {
+		this.value = {};
+		await this.save();
+	}
 }
 
-export async function saveSyncState(state: SyncState): Promise<void> {
-	await ensureDataDir();
-	const statePath = join(DATA_DIR, STATE_FILE);
-	await writeFile(statePath, JSON.stringify(state, null, 2));
+const SESSIONS_FILE = join(DATA_DIR, 'sessions.json');
+
+export const sessions = new Sessions(
+	SESSIONS_FILE,
+	await read(SESSIONS_FILE, {}),
+);
+
+class Handles extends Storage<Record<Handle, Did>> {
+	get(identifier: Handle) {
+		return this.value[identifier];
+	}
+
+	async set(identifier: Handle, did: Did) {
+		this.value[identifier] = did;
+		await this.save();
+	}
 }
 
-export async function getMapping(
-	guildSlug: string,
-): Promise<{ rkey: string; syncedAt: string } | null> {
-	const state = await loadSyncState();
-	return state.mappings[guildSlug] ?? null;
+const HANDLES_FILE = join(DATA_DIR, 'handles.json');
+
+export const handles = new Handles(HANDLES_FILE, await read(HANDLES_FILE, {}));
+
+interface Mapping {
+	rkey: RecordKey;
+	syncedAt: string;
 }
 
-export async function setMapping(
-	guildSlug: string,
-	rkey: RecordKey,
-): Promise<void> {
-	const state = await loadSyncState();
-	state.mappings[guildSlug] = { rkey, syncedAt: new Date().toISOString() };
-	state.lastSync = new Date().toISOString();
-	await saveSyncState(state);
+type MappingsData = Record<string, Mapping>;
+
+class Mappings extends Storage<MappingsData> {
+	get(guildSlug: string) {
+		return this.value[guildSlug];
+	}
+
+	async set(guildSlug: string, rkey: RecordKey) {
+		this.value[guildSlug] = { rkey, syncedAt: new Date().toISOString() };
+		await this.save();
+	}
 }
 
-export async function setActor(actor: Did): Promise<void> {
-	const state = await loadSyncState();
-	state.actor = actor;
-	await saveSyncState(state);
-}
+const MAPPINGS_FILE = join(DATA_DIR, 'mappings.json');
+
+export const mappings = new Mappings(
+	MAPPINGS_FILE,
+	await read(MAPPINGS_FILE, {}),
+);

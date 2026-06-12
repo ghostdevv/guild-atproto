@@ -1,15 +1,16 @@
 import { NodeDnsHandleResolver } from '@atcute/identity-resolver-node';
 import type { OAuthSession } from '@atcute/oauth-node-client';
+import type { Did, Handle } from '@atcute/lexicons';
 import { log, spinner } from '@clack/prompts';
-import type { Did } from '@atcute/lexicons';
 import { serve } from '@hono/node-server';
 import { Client } from '@atcute/client';
+import { sessions } from './storage';
 import { Hono } from 'hono';
 import {
-	OAuthClient,
-	MemoryStore,
-	scope,
 	type StoredState,
+	MemoryStore,
+	OAuthClient,
+	scope,
 } from '@atcute/oauth-node-client';
 import {
 	CompositeDidDocumentResolver,
@@ -52,7 +53,7 @@ export function createOAuthClient(port: number): OAuthClient {
 			],
 		},
 		stores: {
-			sessions: new MemoryStore(),
+			sessions,
 			states: new MemoryStore<string, StoredState>({
 				maxSize: 10,
 				ttl: 10 * 60_000,
@@ -90,7 +91,7 @@ async function openUrl(url: string): Promise<void> {
 }
 
 export async function authenticate(
-	handle: string,
+	handle: Handle,
 ): Promise<{ session: OAuthSession; client: Client }> {
 	const port = 3456;
 	const oauth = createOAuthClient(port);
@@ -155,7 +156,6 @@ export async function authenticate(
 	const server = serve({ fetch: app.fetch, port: 3456 });
 
 	const { url: authUrl } = await oauth.authorize({
-		// @ts-expect-error - library type mismatch
 		target: { type: 'account', identifier: handle },
 		state: {},
 	});

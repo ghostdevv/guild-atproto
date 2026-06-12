@@ -1,7 +1,7 @@
 import type { CommunityLexiconCalendarEvent } from '@atcute/lexicon-community';
-import { getMapping, setMapping } from './storage';
 import { ok, type Client } from '@atcute/client';
 import type { GuildEvent } from './types';
+import { mappings } from './storage';
 import { dequal } from 'dequal';
 
 function mapToCalendarEvent(
@@ -43,7 +43,7 @@ export async function syncEvent(
 	event: GuildEvent,
 ): Promise<{ action: 'created' | 'updated' | 'skipped'; rkey?: string }> {
 	const record = mapToCalendarEvent(event);
-	const existingMapping = await getMapping(event.slug);
+	const existingMapping = mappings.get(event.slug);
 	const { did: repo } = await ok(
 		client.get('com.atproto.server.getSession', {}),
 	);
@@ -62,7 +62,7 @@ export async function syncEvent(
 			}),
 		);
 
-		await setMapping(event.slug, rkey);
+		await mappings.set(event.slug, rkey);
 
 		return { action: 'created', rkey };
 	}
@@ -89,7 +89,7 @@ export async function syncEvent(
 			}),
 		);
 
-		await setMapping(event.slug, rkey);
+		await mappings.set(event.slug, rkey);
 
 		return { action: 'created', rkey };
 	}
@@ -112,7 +112,7 @@ export async function syncEvent(
 		}),
 	);
 
-	await setMapping(event.slug, existingMapping.rkey);
+	await mappings.set(event.slug, existingMapping.rkey);
 
 	return { action: 'updated', rkey: existingMapping.rkey };
 }
