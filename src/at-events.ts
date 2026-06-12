@@ -1,8 +1,10 @@
 import { CommunityLexiconCalendarEvent } from '@atcute/lexicon-community';
-import { ComAtprotoRepoListRecords } from '@atcute/atproto';
+import * as v from '@atcute/lexicons/validations';
 import type { GuildEvent } from './guild.ts';
 import type { Client } from '@atcute/client';
 import { spinner } from '@clack/prompts';
+import { images } from './storage.ts';
+import * as CID from '@atcute/cid';
 import { dequal } from 'dequal';
 import {
 	parseResourceUri,
@@ -10,8 +12,25 @@ import {
 	type Did,
 	is,
 } from '@atcute/lexicons';
+import {
+	ComAtprotoRepoListRecords,
+	ComAtprotoRepoUploadBlob,
+} from '@atcute/atproto';
 
-export type AtmoEvent = CommunityLexiconCalendarEvent.Main;
+// Extended to add the atmo.rsvp media field
+const AtmoEventSchema = v.object({
+	...CommunityLexiconCalendarEvent.mainSchema.object.shape,
+	media: v.optional(
+		v.array(
+			v.object({
+				role: v.literal('thumbnail'),
+				content: v.blob(),
+			}),
+		),
+	),
+});
+
+export type AtmoEvent = v.InferOutput<typeof AtmoEventSchema>;
 
 export async function fetchAtmoEvents(client: Client, repo: Did) {
 	const events: (AtmoEvent & { rkey: RecordKey })[] = [];
@@ -63,7 +82,13 @@ export async function fetchAtmoEvents(client: Client, repo: Did) {
 	return events;
 }
 
-export function guildEventToAtmosphere(event: GuildEvent): AtmoEvent {
+export async function guildEventToAtmosphere(
+	client: Client,
+	event: GuildEvent,
+	existingAtmoEvent?: AtmoEvent,
+): Promise<AtmoEvent> {
+	const media = await getEventMedia(client, event, existingAtmoEvent);
+
 	let mode: AtmoEvent['mode'] = 'community.lexicon.calendar.event#inperson';
 	if (event.hasExternalUrl && !event.hasVenue) {
 		mode = 'community.lexicon.calendar.event#virtual';
@@ -95,6 +120,7 @@ export function guildEventToAtmosphere(event: GuildEvent): AtmoEvent {
 			},
 		],
 		rsvpExpected: false,
+		media,
 	};
 }
 
@@ -116,4 +142,43 @@ export function eventsAreEqual(
 ): boolean {
 	const { rkey: _rkey, ...beforeFiltered } = before;
 	return dequal(beforeFiltered, after);
+}
+
+async function getEventMedia(
+	client: Client,
+	guildEvent: GuildEvent,
+	atmoEvent?: AtmoEvent,
+): Promise<AtmoEvent['media']> {
+	const image = await images.getOrSet(guildEvent.uploadedSocialCard.url);
+
+	if (atmoEvent?.media) {
+		const thumb = atmoEvent.media.find((m) => m.role === 'thumbnail');
+
+		if (thumb) {
+			const cid = await CID.create(0x55, new Uint8Array(image));
+			const cidString = CID.toString(cid);
+
+			if (thumb.content.ref.$link === cidString) {
+				return [thumb];
+			}
+		}
+	}
+
+	const response = await client.call(ComAtprotoRepoUploadBlob, {
+		input: image,
+		headers: {
+			'Content-Type': 'image/png',
+		},
+	});
+
+	if (!response.ok) {
+		throw new Error('Failed to upload blob', { cause: response.data });
+	}
+
+	return [
+		{
+			role: 'thumbnail',
+			content: response.data.blob,
+		},
+	];
 }

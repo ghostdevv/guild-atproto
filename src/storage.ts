@@ -2,6 +2,7 @@ import type { SessionStore, StoredSession } from '@atcute/oauth-node-client';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import type { Did, Handle } from '@atcute/lexicons';
 import { existsSync } from 'node:fs';
+import * as devalue from 'devalue';
 import { join } from 'node:path';
 
 const DATA_DIR = join(import.meta.dirname, '../.data');
@@ -10,7 +11,7 @@ if (!existsSync(DATA_DIR)) await mkdir(DATA_DIR, { recursive: true });
 async function read<T>(file: string, fallback: T): Promise<T> {
 	if (!existsSync(file)) return fallback;
 	const contents = await readFile(file, 'utf-8');
-	return JSON.parse(contents);
+	return devalue.parse(contents);
 }
 
 class Storage<T> {
@@ -23,7 +24,7 @@ class Storage<T> {
 	}
 
 	protected async save() {
-		await writeFile(this.file, JSON.stringify(this.value, null, 2));
+		await writeFile(this.file, devalue.stringify(this.value));
 	}
 }
 
@@ -70,5 +71,26 @@ class Handles extends Storage<Record<Handle, Did>> {
 }
 
 const HANDLES_FILE = join(DATA_DIR, 'handles.json');
-
 export const handles = new Handles(HANDLES_FILE, await read(HANDLES_FILE, {}));
+
+class Images extends Storage<Record<string, ArrayBuffer>> {
+	get(url: string) {
+		return this.value[url];
+	}
+
+	async getOrSet(url: string) {
+		if (this.value[url]) return this.value[url];
+		await this.set(url);
+		return this.value[url];
+	}
+
+	async set(url: string) {
+		const response = await fetch(url);
+		const buffer = await response.arrayBuffer();
+		this.value[url] = buffer;
+		await this.save();
+	}
+}
+
+const IMAGES_FILE = join(DATA_DIR, 'images.json');
+export const images = new Images(IMAGES_FILE, await read(IMAGES_FILE, {}));

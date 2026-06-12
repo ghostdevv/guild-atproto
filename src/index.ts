@@ -62,11 +62,18 @@ for (const guildEvent of await selectEvents(atmoEvents, guildEvents)) {
 	s.start(`Syncing ${guildEvent.name}`);
 
 	const existingAtmoEvent = atmoEvents.find((e) => isOnGuild(e, guildEvent));
+
+	const newAtmoEvent = await guildEventToAtmosphere(
+		session.client,
+		guildEvent,
+		existingAtmoEvent,
+	);
+
 	if (!existingAtmoEvent) {
 		const response = await session.client.call(ComAtprotoRepoCreateRecord, {
 			input: {
 				collection: 'community.lexicon.calendar.event',
-				record: guildEventToAtmosphere(guildEvent),
+				record: newAtmoEvent,
 				repo: session.actor,
 			},
 		});
@@ -80,8 +87,6 @@ for (const guildEvent of await selectEvents(atmoEvents, guildEvents)) {
 		s.stop(`Created atmosphere event for ${guildEvent.name} (https://pds.ls/${response.data.uri})`);
 		continue;
 	}
-
-	const newAtmoEvent = guildEventToAtmosphere(guildEvent);
 
 	if (eventsAreEqual(existingAtmoEvent, newAtmoEvent)) {
 		const pdsls = `https://pds.ls/at://${session.actor}/community.lexicon.calendar.event/${existingAtmoEvent.rkey}`;

@@ -26,6 +26,13 @@ const GuildEventSchema = v.object({
 	hasVenue: v.boolean(),
 	hasExternalUrl: v.boolean(),
 	createdAt: v.pipe(v.string(), v.toDate()),
+	uploadedSocialCard: v.object({
+		url: v.pipe(
+			v.string(),
+			URLSchema,
+			v.check((url) => url.endsWith('png'), 'url is png'),
+		),
+	}),
 });
 
 export type GuildEvent = v.InferOutput<typeof GuildEventSchema>;

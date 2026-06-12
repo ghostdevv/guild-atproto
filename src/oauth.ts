@@ -33,6 +33,7 @@ export function createOAuthClient(): OAuthClient {
 		metadata: {
 			redirect_uris: [`http://127.0.0.1:${PORT}/callback`],
 			scope: [
+				scope.blob({ accept: ['image/*'] }),
 				scope.repo({
 					collection: ['community.lexicon.calendar.event'],
 					action: ['create', 'update', 'delete'],

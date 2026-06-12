@@ -48,6 +48,9 @@ importers:
         specifier: ^1.4.1
         version: 1.4.1(typescript@6.0.3)
     devDependencies:
+      '@atcute/cid':
+        specifier: ^2.4.1
+        version: 2.4.1
       '@e18e/eslint-plugin':
         specifier: ^0.5.0
         version: 0.5.0(oxlint@1.69.0(oxlint-tsgolint@0.23.0))
@@ -57,6 +60,9 @@ importers:
       '@types/node':
         specifier: ^25.9.3
         version: 25.9.3
+      devalue:
+        specifier: ^5.8.1
+        version: 5.8.1
       oxlint:
         specifier: ^1.69.0
         version: 1.69.0(oxlint-tsgolint@0.23.0)
@@ -76,6 +82,9 @@ packages:
     resolution: {integrity: sha512-hLnvjiIOStpdUm0cEN+R5YydvbV0d6ap17Iv+t7i/nhSCN3TGMya7M0ftCWtCo+xoQ1EU6HK74R8jqXWlyrM0w==}
     peerDependencies:
       '@atcute/lexicons': ^2.0.0
+
+  '@atcute/cid@2.4.1':
+    resolution: {integrity: sha512-bwhna69RCv7yetXudtj+2qrMPYvhhIQqvJz6YUpUS98v7OdF3X2dnye9Nig2NDrklZcuyOsu7sQo7GOykJXRLQ==}
 
   '@atcute/client@5.0.0':
     resolution: {integrity: sha512-Dtrc1no1oAtpUTmkBxH0xKSgy8qcnk8orPf/PkEATW+MB3k8FPHtPH2fshiKd55rioZkb+xaN+7A29WtqPQHRA==}
@@ -340,6 +349,9 @@ packages:
     resolution: {integrity: sha512-0je+qPKHEMohvfRTCEo3CrPG6cAzAYgmzKyxRiYSSDkS6eGJdyVJm7WaYA5ECaAD9wLB2T4EEeymA5aFVcYXCA==}
     engines: {node: '>=6'}
 
+  devalue@5.8.1:
+    resolution: {integrity: sha512-4CXDYRBGqN+57wVJkuXBYmpAVUSg3L6JAQa/DFqm238G73E1wuyc/JhGQJzN7vUf/CMphYau2zXbfWzDR5aTEw==}
+
   empathic@2.0.1:
     resolution: {integrity: sha512-YGRs8knHhKHVShLkFET/rWAU8kmHbOV5LwN938RHI0pljAJ1Gf6SzXsSmRaEzcXTtOOmVqJ5+WtQPL5uigY50Q==}
     engines: {node: '>=14'}
@@ -425,6 +437,11 @@ snapshots:
   '@atcute/atproto@4.0.2(@atcute/lexicons@2.0.0)':
     dependencies:
       '@atcute/lexicons': 2.0.0
+
+  '@atcute/cid@2.4.1':
+    dependencies:
+      '@atcute/multibase': 1.2.0
+      '@atcute/uint8array': 1.1.2
 
   '@atcute/client@5.0.0(@atcute/lexicons@2.0.0)(typescript@6.0.3)':
     dependencies:
@@ -642,6 +659,8 @@ snapshots:
       undici-types: 7.24.6
 
   dequal@2.0.3: {}
+
+  devalue@5.8.1: {}
 
   empathic@2.0.1: {}
 
