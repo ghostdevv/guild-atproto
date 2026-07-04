@@ -1,11 +1,11 @@
 import { CommunityLexiconCalendarEvent } from '@atcute/lexicon-community';
 import * as v from '@atcute/lexicons/validations';
+import { isDeepStrictEqual } from 'node:util';
 import type { GuildEvent } from './guild.ts';
 import type { Client } from '@atcute/client';
 import { spinner } from '@clack/prompts';
 import { images } from './storage.ts';
 import * as CID from '@atcute/cid';
-import { dequal } from 'dequal';
 import {
 	parseResourceUri,
 	type RecordKey,
@@ -157,7 +157,7 @@ export function eventsAreEqual(
 	after: AtmoEvent,
 ): boolean {
 	const { rkey: _rkey, ...beforeFiltered } = before;
-	return dequal(beforeFiltered, after);
+	return isDeepStrictEqual(beforeFiltered, after);
 }
 
 async function getEventMedia(
