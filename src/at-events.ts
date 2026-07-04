@@ -28,6 +28,16 @@ const AtmoEventSchema = v.object({
 			}),
 		),
 	),
+	additionalData: v.optional(
+		v.object({
+			externalSource: v.optional(
+				v.object({
+					url: v.genericUriString(),
+					rsvpMode: v.literalEnum(['atmo_too', 'external_only']),
+				}),
+			),
+		}),
+	),
 });
 
 export type AtmoEvent = v.InferOutput<typeof AtmoEventSchema>;
@@ -119,8 +129,14 @@ export async function guildEventToAtmosphere(
 				uri: event.fullUrl,
 			},
 		],
-		rsvpExpected: false,
+		rsvpExpected: true,
 		media,
+		additionalData: {
+			externalSource: {
+				rsvpMode: 'external_only',
+				url: event.fullUrl,
+			},
+		},
 	};
 }
 
