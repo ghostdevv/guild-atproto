@@ -95,9 +95,9 @@ export async function fetchAtmoEvents(client: Client, repo: Did) {
 export async function guildEventToAtmosphere(
 	client: Client,
 	event: GuildEvent,
-	existingAtmoEvent?: AtmoEvent,
+	existing?: AtmoEvent,
 ): Promise<AtmoEvent> {
-	const media = await getEventMedia(client, event, existingAtmoEvent);
+	const media = await getEventMedia(client, event, existing);
 
 	let mode: AtmoEvent['mode'] = 'community.lexicon.calendar.event#inperson';
 	if (event.hasExternalUrl && !event.hasVenue) {
@@ -105,6 +105,12 @@ export async function guildEventToAtmosphere(
 	} else if (event.hasExternalUrl && event.hasVenue) {
 		mode = 'community.lexicon.calendar.event#hybrid';
 	}
+
+	const guildUri = {
+		$type: 'community.lexicon.calendar.event#uri' as const,
+		name: 'Register on Guild',
+		uri: event.fullUrl,
+	};
 
 	return {
 		$type: 'community.lexicon.calendar.event',
@@ -116,18 +122,14 @@ export async function guildEventToAtmosphere(
 		mode,
 		status: 'community.lexicon.calendar.event#scheduled',
 		locations: [
-			{
-				$type: 'community.lexicon.calendar.event#uri',
-				name: 'Register on Guild',
-				uri: event.fullUrl,
-			},
+			...(existing?.locations?.filter(
+				(l) => 'uri' in l && l.uri !== event.fullUrl,
+			) ?? []),
+			guildUri,
 		],
 		uris: [
-			{
-				$type: 'community.lexicon.calendar.event#uri',
-				name: 'Register on Guild',
-				uri: event.fullUrl,
-			},
+			...(existing?.uris?.filter((u) => u.uri !== event.fullUrl) ?? []),
+			guildUri,
 		],
 		rsvpExpected: true,
 		media,
