@@ -166,8 +166,16 @@ async function getEventMedia(
 	client: Client,
 	guildEvent: GuildEvent,
 	atmoEvent?: AtmoEvent,
-): Promise<AtmoEvent['media']> {
-	const image = await images.getOrSet(guildEvent.uploadedSocialCard.url);
+): Promise<AtmoEvent['media'] | undefined> {
+	const image = guildEvent.uploadedSocialCard
+		? await images.getOrSet(guildEvent.uploadedSocialCard?.url)
+		: // oxlint-disable-next-line no-undefined
+			undefined;
+
+	if (!image) {
+		// oxlint-disable-next-line no-undefined
+		return undefined;
+	}
 
 	if (atmoEvent?.media) {
 		const thumb = atmoEvent.media.find((m) => m.role === 'thumbnail');
