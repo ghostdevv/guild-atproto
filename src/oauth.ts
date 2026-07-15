@@ -1,8 +1,8 @@
 import { NodeDnsHandleResolver } from '@atcute/identity-resolver-node';
+import { log, spinner, type SpinnerResult } from '@clack/prompts';
 import type { OAuthSession } from '@atcute/oauth-node-client';
 import type { Did, Handle } from '@atcute/lexicons';
 import { handles, sessions } from './storage.ts';
-import { log, spinner } from '@clack/prompts';
 import { serve } from '@hono/node-server';
 import { Client } from '@atcute/client';
 import open from 'tiny-open';
@@ -64,7 +64,7 @@ export function createOAuthClient(): OAuthClient {
 	});
 }
 
-async function authenticate(handle: Handle) {
+async function authenticate(handle: Handle, s: SpinnerResult) {
 	const oauth = createOAuthClient();
 	const app = new Hono();
 
@@ -119,14 +119,10 @@ async function authenticate(handle: Handle) {
 		state: {},
 	});
 
-	log.info(`Opening ${authUrl.toString()}`);
-	const s = spinner();
-	s.start('Awaiting oauth...');
+	s.message(`Opening ${authUrl.toString()}`);
 
 	await open(authUrl.toString());
 	const session = await sessionPromise;
-
-	s.stop('Authenticated!');
 
 	server.close();
 	return session;
@@ -144,12 +140,18 @@ async function restoreSession(handle: Handle, did: Did) {
 }
 
 export async function login(handle: Handle) {
+	const s = spinner();
+	s.start('Logging into the atmosphere');
+
 	const did = handles.get(handle);
 
 	if (did) {
+		s.message('Restoring session');
 		const session = await restoreSession(handle, did);
 
 		if (session) {
+			s.stop('Session restored!');
+
 			return {
 				actor: session.did,
 				client: createClient(session),
@@ -157,8 +159,10 @@ export async function login(handle: Handle) {
 		}
 	}
 
-	const session = await authenticate(handle);
+	s.message('Creating new session');
+	const session = await authenticate(handle, s);
 	await handles.set(handle, session.did);
+	s.stop('Logged in!');
 
 	return {
 		actor: session.did,
