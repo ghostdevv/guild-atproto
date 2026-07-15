@@ -33,6 +33,7 @@
 		"oxlint": "^1.69.0",
 		"oxlint-tsgolint": "^0.23.0",
 		"prettier": "^3.8.4",
+		"sharp": "^0.35.3",
 		"typescript": "^6.0.3"
 	},
 	"volta": {

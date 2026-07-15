@@ -6,6 +6,7 @@ import type { Client } from '@atcute/client';
 import { spinner } from '@clack/prompts';
 import { images } from './storage.ts';
 import * as CID from '@atcute/cid';
+import sharp from 'sharp';
 import {
 	parseResourceUri,
 	type RecordKey,
@@ -25,6 +26,12 @@ const AtmoEventSchema = v.object({
 			v.object({
 				role: v.literal('thumbnail'),
 				content: v.blob(),
+				aspect_ratio: v.optional(
+					v.object({
+						width: v.integer(),
+						height: v.integer(),
+					}),
+				),
 			}),
 		),
 	),
@@ -186,7 +193,7 @@ async function getEventMedia(
 			const cid = await CID.create(0x55, new Uint8Array(image));
 			const cidString = CID.toString(cid);
 
-			if (thumb.content.ref.$link === cidString) {
+			if (thumb.content.ref.$link === cidString && thumb.aspect_ratio) {
 				return [thumb];
 			}
 		}
@@ -205,10 +212,13 @@ async function getEventMedia(
 		throw new Error('Failed to upload blob', { cause: response.data });
 	}
 
+	const { width, height } = await sharp(image).metadata();
+
 	return [
 		{
 			role: 'thumbnail',
 			content: response.data.blob,
+			aspect_ratio: { width, height },
 		},
 	];
 }
