@@ -35,6 +35,13 @@ const GuildEventSchema = v.object({
 			),
 		}),
 	),
+	generatedSocialCardURL: v.nullable(
+		v.pipe(
+			v.string(),
+			URLSchema,
+			v.check((url) => url.endsWith('svg'), 'url is svg'),
+		),
+	),
 });
 
 export type GuildEvent = v.InferOutput<typeof GuildEventSchema>;

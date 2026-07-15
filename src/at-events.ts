@@ -169,8 +169,10 @@ async function getEventMedia(
 ): Promise<AtmoEvent['media'] | undefined> {
 	const image = guildEvent.uploadedSocialCard
 		? await images.getOrSet(guildEvent.uploadedSocialCard?.url)
-		: // oxlint-disable-next-line no-undefined
-			undefined;
+		: guildEvent.generatedSocialCardURL
+			? await images.getOrSet(guildEvent.generatedSocialCardURL)
+			: // oxlint-disable-next-line no-undefined
+				undefined;
 
 	if (!image) {
 		// oxlint-disable-next-line no-undefined
@@ -193,7 +195,9 @@ async function getEventMedia(
 	const response = await client.call(ComAtprotoRepoUploadBlob, {
 		input: image,
 		headers: {
-			'Content-Type': 'image/png',
+			'Content-Type': guildEvent.uploadedSocialCard
+				? 'image/png'
+				: 'image/svg+xml',
 		},
 	});
 
