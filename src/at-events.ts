@@ -21,6 +21,7 @@ import {
 // Extended to add the atmo.rsvp media field
 const AtmoEventSchema = v.object({
 	...CommunityLexiconCalendarEvent.mainSchema.object.shape,
+	timezone: v.optional(v.string()),
 	media: v.optional(
 		v.array(
 			v.object({
@@ -127,6 +128,7 @@ export async function guildEventToAtmosphere(
 		startsAt: event.startAt.toString({ timeZone: event.timeZone }),
 		endsAt: event.endAt.toString({ timeZone: event.timeZone }),
 		mode,
+		timezone: event.timeZone,
 		status: 'community.lexicon.calendar.event#scheduled',
 		locations: [
 			...(existing?.locations?.filter(
