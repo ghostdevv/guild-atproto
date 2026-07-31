@@ -6,7 +6,7 @@ Currently the idea is to point users towards Guild, using atproto to help with d
 
 ## Running Locally
 
-Node 24 and pnpm 11 is required
+Node 26 and pnpm 11 is required
 
 1. Clone the repo
 2. Run `pnpm install`
