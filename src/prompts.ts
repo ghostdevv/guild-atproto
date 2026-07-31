@@ -23,12 +23,14 @@ export async function selectEvents(
 		exit('No events found for this guild.');
 	}
 
+	const formatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'full' });
+
 	const selected = await multiselect({
 		message: 'Select events to sync:',
 		options: guildEvents.map((event) => ({
 			value: event,
 			label: event.name,
-			hint: new Date(event.startAt).toLocaleDateString(),
+			hint: formatter.format(event.startAt),
 		})),
 		initialValues: guildEvents.filter((event) => {
 			return atmoEvents.some((e) => isOnGuild(e, event));

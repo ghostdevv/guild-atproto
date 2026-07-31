@@ -123,9 +123,9 @@ export async function guildEventToAtmosphere(
 		$type: 'community.lexicon.calendar.event',
 		name: event.name,
 		description: `> Heads up! You must [register on Guild](${event.fullUrl}) to attend this event __in-person__.\n\n${event.description}`,
-		createdAt: event.createdAt.toISOString(),
-		startsAt: event.startAt,
-		endsAt: event.endAt,
+		createdAt: event.createdAt.toString(),
+		startsAt: event.startAt.toString({ timeZone: event.timeZone }),
+		endsAt: event.endAt.toString({ timeZone: event.timeZone }),
 		mode,
 		status: 'community.lexicon.calendar.event#scheduled',
 		locations: [

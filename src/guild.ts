@@ -14,18 +14,40 @@ const URLSchema = v.rawTransform<string, `https://${string}`>((ctx) => {
 	return url.toString() as `https://${string}`;
 });
 
+const NOT_BROKEN_ISO_8601 = /\+|Z$/;
+
+const InstantSchema = v.pipe(
+	v.string(),
+	v.trim(),
+	v.rawTransform((ctx) => {
+		try {
+			// workaround to fix bug in Guild
+			const value = NOT_BROKEN_ISO_8601.test(ctx.dataset.value)
+				? ctx.dataset.value
+				: `${ctx.dataset.value}Z`;
+
+			return Temporal.Instant.from(value);
+		} catch (error) {
+			// oxlint-disable-next-line typescript/restrict-template-expressions
+			const message = Error.isError(error) ? error.message : `${error}`;
+			ctx.addIssue({ message: `invalid instant: ${message}` });
+			return ctx.NEVER;
+		}
+	}),
+);
+
 const GuildEventSchema = v.object({
 	slug: v.string(),
 	fullUrl: v.pipe(v.string(), URLSchema),
 	name: v.string(),
 	description: v.optional(v.string()),
-	startAt: v.string(),
-	endAt: v.string(),
+	startAt: InstantSchema,
+	endAt: InstantSchema,
 	timeZone: v.string(),
 	visibility: v.union([v.literal('LISTED'), v.literal('UNLISTED')]), // todo skip unlisted
 	hasVenue: v.boolean(),
 	hasExternalUrl: v.boolean(),
-	createdAt: v.pipe(v.string(), v.toDate()),
+	createdAt: InstantSchema,
 	uploadedSocialCard: v.nullable(
 		v.object({
 			url: v.pipe(
