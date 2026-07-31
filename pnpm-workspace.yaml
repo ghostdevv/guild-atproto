@@ -4,3 +4,6 @@ allowBuilds:
 minimumReleaseAgeExclude:
     - '@atcute/bluesky@4.0.9'
     - '@atcute/client@5.1.0'
+
+overrides:
+    typescript: npm:typescript-native-bridge@6.0.3-bridge.7.tsgo.7.0.2
