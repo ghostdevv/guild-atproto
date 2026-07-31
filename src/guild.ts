@@ -44,7 +44,7 @@ const GuildEventSchema = v.object({
 	startAt: InstantSchema,
 	endAt: InstantSchema,
 	timeZone: v.string(),
-	visibility: v.union([v.literal('LISTED'), v.literal('UNLISTED')]), // todo skip unlisted
+	visibility: v.union([v.literal('LISTED'), v.literal('UNLISTED')]),
 	hasVenue: v.boolean(),
 	hasExternalUrl: v.boolean(),
 	createdAt: InstantSchema,
@@ -90,7 +90,10 @@ export async function fetchGuildEvents(slug: string): Promise<GuildEvent[]> {
 		}
 
 		const result = v.parse(EventsResponseSchema, await response.json());
-		const events = result.events.edges.map((edge) => edge.node);
+
+		const events = result.events.edges
+			.map((edge) => edge.node)
+			.filter((event) => event.visibility === 'LISTED');
 
 		s.stop('Events fetched!');
 		return events;
