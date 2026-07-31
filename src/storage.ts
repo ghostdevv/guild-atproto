@@ -94,3 +94,32 @@ class Images extends Storage<Record<string, ArrayBuffer>> {
 
 const IMAGES_FILE = join(DATA_DIR, 'images.json');
 export const images = new Images(IMAGES_FILE, await read(IMAGES_FILE, {}));
+
+interface GuildTokensData {
+	accessToken: string;
+	refreshToken: string;
+	expiresAt: number;
+	scopes: string;
+}
+
+class GuildTokens extends Storage<GuildTokensData | null> {
+	get() {
+		return this.value;
+	}
+
+	async set(tokens: GuildTokensData) {
+		this.value = tokens;
+		await this.save();
+	}
+
+	async clear() {
+		this.value = null;
+		await this.save();
+	}
+}
+
+const GUILD_TOKENS_FILE = join(DATA_DIR, 'guild-tokens.json');
+export const guildTokens = new GuildTokens(
+	GUILD_TOKENS_FILE,
+	await read<GuildTokensData | null>(GUILD_TOKENS_FILE, null),
+);

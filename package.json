@@ -6,8 +6,8 @@
 	"scripts": {
 		"check": "prettier --check . && oxlint --type-aware && tsc --noEmit",
 		"fix": "prettier --write . && oxlint --type-aware --fix",
-		"start": "node src/index.ts",
-		"dev": "node --watch src/index.ts"
+		"start": "node --env-file-if-exists=.env src/index.ts",
+		"dev": "node --env-file-if-exists=.env --watch src/index.ts"
 	},
 	"packageManager": "pnpm@11.6.0",
 	"dependencies": {
