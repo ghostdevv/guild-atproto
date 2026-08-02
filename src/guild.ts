@@ -14,19 +14,12 @@ const URLSchema = v.rawTransform<string, `https://${string}`>((ctx) => {
 	return url.toString() as `https://${string}`;
 });
 
-const NOT_BROKEN_ISO_8601 = /\+|Z$/;
-
 const InstantSchema = v.pipe(
 	v.string(),
 	v.trim(),
 	v.rawTransform((ctx) => {
 		try {
-			// workaround to fix bug in Guild
-			const value = NOT_BROKEN_ISO_8601.test(ctx.dataset.value)
-				? ctx.dataset.value
-				: `${ctx.dataset.value}Z`;
-
-			return Temporal.Instant.from(value);
+			return Temporal.Instant.from(ctx.dataset.value);
 		} catch (error) {
 			// oxlint-disable-next-line typescript/restrict-template-expressions
 			const message = Error.isError(error) ? error.message : `${error}`;
