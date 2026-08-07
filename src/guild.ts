@@ -130,3 +130,23 @@ export async function fetchGuildPresentations(
 	const result = v.parse(EventDetailSchema, await response.json());
 	return result.presentations.edges.map((edge) => edge.node);
 }
+
+const AttendeesResponseSchema = v.object({ totalCount: v.number() });
+
+export async function fetchGuildAttendeeCount(
+	slug: string,
+	accessToken: string,
+): Promise<number | null> {
+	const url = new URL(GUILD_API_BASE);
+	url.pathname += `/events/${slug}/attendees`;
+	url.searchParams.set('first', '1');
+
+	const response = await fetch(url, {
+		headers: { Authorization: `Bearer ${accessToken}` },
+	});
+
+	if (!response.ok) return null;
+
+	const result = v.parse(AttendeesResponseSchema, await response.json());
+	return result.totalCount;
+}

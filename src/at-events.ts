@@ -44,6 +44,7 @@ const AtmoEventSchema = v.object({
 					rsvpMode: v.literalEnum(['atmo_too', 'external_only']),
 				}),
 			),
+			attendeeCount: v.optional(v.integer()),
 		}),
 	),
 });
@@ -108,8 +109,10 @@ export async function guildEventToAtmosphere(
 	client: Client,
 	event: GuildEvent,
 	existing?: AtmoEvent,
+	attendeeCount?: number,
 ): Promise<AtmoEvent> {
 	const media = await getEventMedia(client, event, existing);
+	const attendees = attendeeCount ?? existing?.additionalData?.attendeeCount;
 
 	let mode: AtmoEvent['mode'] = 'community.lexicon.calendar.event#inperson';
 	if (event.hasExternalUrl && !event.hasVenue) {
@@ -151,6 +154,7 @@ export async function guildEventToAtmosphere(
 				rsvpMode: 'external_only',
 				url: event.fullUrl,
 			},
+			...(attendees === undefined ? {} : { attendeeCount: attendees }),
 		},
 	};
 }

@@ -1,8 +1,12 @@
 import { intro, outro, group, text, spinner } from '@clack/prompts';
 import { type Handle, isHandle } from '@atcute/lexicons/syntax';
-// import { authenticateWithGuild } from './guild-oauth.ts';
+import { authenticateWithGuild, getGuildAccessToken } from './guild-oauth.ts';
 import { exit, selectEvents } from './prompts.ts';
-import { fetchGuildEvents, fetchGuildPresentations } from './guild.ts';
+import {
+	fetchGuildEvents,
+	fetchGuildPresentations,
+	fetchGuildAttendeeCount,
+} from './guild.ts';
 import { login } from './oauth.ts';
 import {
 	guildEventToAtmosphere,
@@ -60,6 +64,7 @@ const choices = await group(
 );
 
 const session = await login(choices.handle as Handle);
+const guildAuth = await authenticateWithGuild();
 
 const atmoEvents = await fetchAtmoEvents(session.client, session.actor);
 const atmoTalks = await fetchAtmoTalks(session.client, session.actor);
@@ -71,10 +76,21 @@ for (const guildEvent of await selectEvents(atmoEvents, guildEvents)) {
 
 	const existingAtmoEvent = atmoEvents.find((e) => isOnGuild(e, guildEvent));
 
+	let attendeeCount: number | undefined;
+	if (guildAuth) {
+		const token = await getGuildAccessToken();
+		if (token) {
+			attendeeCount =
+				(await fetchGuildAttendeeCount(guildEvent.slug, token)) ??
+				undefined;
+		}
+	}
+
 	const newAtmoEvent = await guildEventToAtmosphere(
 		session.client,
 		guildEvent,
 		existingAtmoEvent,
+		attendeeCount,
 	);
 
 	let eventRef: StrongRef;
