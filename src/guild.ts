@@ -95,3 +95,58 @@ export async function fetchGuildEvents(slug: string): Promise<GuildEvent[]> {
 		throw error;
 	}
 }
+
+const PresentationSchema = v.object({
+	title: v.string(),
+	description: v.nullish(v.string()),
+	videoSourceUrl: v.nullish(v.string()),
+	presenter: v.nullish(
+		v.object({ firstName: v.string(), lastName: v.string() }),
+	),
+	presenterFirstName: v.nullish(v.string()),
+	presenterLastName: v.nullish(v.string()),
+});
+
+export type GuildPresentation = v.InferOutput<typeof PresentationSchema>;
+
+const EventDetailSchema = v.object({
+	presentations: v.object({
+		edges: v.array(v.object({ node: PresentationSchema })),
+	}),
+});
+
+export async function fetchGuildPresentations(
+	slug: string,
+): Promise<GuildPresentation[]> {
+	const url = new URL(GUILD_API_BASE);
+	url.pathname += `/events/${slug}`;
+
+	const response = await fetch(url);
+
+	if (!response.ok) {
+		throw new Error(`Failed to fetch event: ${response.statusText}`);
+	}
+
+	const result = v.parse(EventDetailSchema, await response.json());
+	return result.presentations.edges.map((edge) => edge.node);
+}
+
+const AttendeesResponseSchema = v.object({ totalCount: v.number() });
+
+export async function fetchGuildAttendeeCount(
+	slug: string,
+	accessToken: string,
+): Promise<number | null> {
+	const url = new URL(GUILD_API_BASE);
+	url.pathname += `/events/${slug}/attendees`;
+	url.searchParams.set('first', '1');
+
+	const response = await fetch(url, {
+		headers: { Authorization: `Bearer ${accessToken}` },
+	});
+
+	if (!response.ok) return null;
+
+	const result = v.parse(AttendeesResponseSchema, await response.json());
+	return result.totalCount;
+}
