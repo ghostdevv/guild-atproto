@@ -51,7 +51,7 @@ const AtmoEventSchema = v.object({
 export type AtmoEvent = v.InferOutput<typeof AtmoEventSchema>;
 
 export async function fetchAtmoEvents(client: Client, repo: Did) {
-	const events: (AtmoEvent & { rkey: RecordKey })[] = [];
+	const events: (AtmoEvent & { rkey: RecordKey; cid: string })[] = [];
 	let cursor: string | undefined;
 
 	const s = spinner();
@@ -92,7 +92,11 @@ export async function fetchAtmoEvents(client: Client, repo: Did) {
 				process.exit(1);
 			}
 
-			events.push({ ...record.value, rkey: parsed.rkey });
+			events.push({
+				...record.value,
+				rkey: parsed.rkey,
+				cid: record.cid,
+			});
 		}
 	} while (cursor);
 

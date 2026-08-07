@@ -2,7 +2,7 @@ import { intro, outro, group, text, spinner } from '@clack/prompts';
 import { type Handle, isHandle } from '@atcute/lexicons/syntax';
 // import { authenticateWithGuild } from './guild-oauth.ts';
 import { exit, selectEvents } from './prompts.ts';
-import { fetchGuildEvents } from './guild.ts';
+import { fetchGuildEvents, fetchGuildPresentations } from './guild.ts';
 import { login } from './oauth.ts';
 import {
 	guildEventToAtmosphere,
@@ -10,6 +10,7 @@ import {
 	eventsAreEqual,
 	isOnGuild,
 } from './at-events.ts';
+import { fetchAtmoTalks, syncTalks, type StrongRef } from './talks.ts';
 import {
 	ComAtprotoRepoCreateRecord,
 	ComAtprotoRepoPutRecord,
@@ -61,6 +62,7 @@ const choices = await group(
 const session = await login(choices.handle as Handle);
 
 const atmoEvents = await fetchAtmoEvents(session.client, session.actor);
+const atmoTalks = await fetchAtmoTalks(session.client, session.actor);
 const guildEvents = await fetchGuildEvents(choices.guildSlug);
 
 for (const guildEvent of await selectEvents(atmoEvents, guildEvents)) {
@@ -74,6 +76,8 @@ for (const guildEvent of await selectEvents(atmoEvents, guildEvents)) {
 		guildEvent,
 		existingAtmoEvent,
 	);
+
+	let eventRef: StrongRef;
 
 	if (!existingAtmoEvent) {
 		const response = await session.client.call(ComAtprotoRepoCreateRecord, {
@@ -91,31 +95,63 @@ for (const guildEvent of await selectEvents(atmoEvents, guildEvents)) {
 
 		// prettier-ignore
 		s.stop(`Created atmosphere event for ${guildEvent.name} (https://pds.ls/${response.data.uri})`);
-		continue;
+		eventRef = {
+			$type: 'com.atproto.repo.strongRef',
+			uri: response.data.uri,
+			cid: response.data.cid,
+		};
+	} else if (eventsAreEqual(existingAtmoEvent, newAtmoEvent)) {
+		const uri = `at://${session.actor}/community.lexicon.calendar.event/${existingAtmoEvent.rkey}`;
+		s.stop(
+			`No changes needed for ${guildEvent.name} (https://pds.ls/${uri})`,
+		);
+		eventRef = {
+			$type: 'com.atproto.repo.strongRef',
+			uri,
+			cid: existingAtmoEvent.cid,
+		};
+	} else {
+		const response = await session.client.call(ComAtprotoRepoPutRecord, {
+			input: {
+				collection: 'community.lexicon.calendar.event',
+				rkey: existingAtmoEvent.rkey,
+				record: newAtmoEvent,
+				repo: session.actor,
+			},
+		});
+
+		if (!response.ok) {
+			s.stop(`Failed to update atmosphere event for ${guildEvent.name}`);
+			process.exit(1);
+		}
+
+		// prettier-ignore
+		s.stop(`Updated atmosphere event for ${guildEvent.name} (https://pds.ls/${response.data.uri})`);
+		eventRef = {
+			$type: 'com.atproto.repo.strongRef',
+			uri: response.data.uri,
+			cid: response.data.cid,
+		};
 	}
 
-	if (eventsAreEqual(existingAtmoEvent, newAtmoEvent)) {
-		const pdsls = `https://pds.ls/at://${session.actor}/community.lexicon.calendar.event/${existingAtmoEvent.rkey}`;
-		s.stop(`No changes needed for ${guildEvent.name} (${pdsls})`);
-		continue;
+	const presentations = await fetchGuildPresentations(guildEvent.slug);
+
+	if (presentations.length > 0) {
+		const ts = spinner();
+		ts.start(
+			`Syncing ${presentations.length} talks for ${guildEvent.name}`,
+		);
+		const { created, updated } = await syncTalks(
+			session.client,
+			session.actor,
+			eventRef,
+			presentations,
+			atmoTalks,
+		);
+		ts.stop(
+			`Talks for ${guildEvent.name}: ${created} created, ${updated} updated`,
+		);
 	}
-
-	const response = await session.client.call(ComAtprotoRepoPutRecord, {
-		input: {
-			collection: 'community.lexicon.calendar.event',
-			rkey: existingAtmoEvent.rkey,
-			record: newAtmoEvent,
-			repo: session.actor,
-		},
-	});
-
-	if (!response.ok) {
-		s.stop(`Failed to update atmosphere event for ${guildEvent.name}`);
-		process.exit(1);
-	}
-
-	// prettier-ignore
-	s.stop(`Updated atmosphere event for ${guildEvent.name} (https://pds.ls/${response.data.uri})`);
 }
 
 outro('Sync complete!');
