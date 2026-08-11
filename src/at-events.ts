@@ -101,7 +101,7 @@ export async function fetchAtmoEvents(client: Client, repo: Did) {
 	return events;
 }
 
-const YOUTU_BE_REGEX = /^\/(shorts\/)?([a-zA-Z0-9\-_]+)$/;
+const YOUTU_BE_REGEX = /^\/(live\/)?([a-zA-Z0-9\-_]+)$/;
 
 function normaliseKnownUrls(url: URL) {
 	// oxlint-disable-next-line default-case
@@ -117,6 +117,8 @@ function normaliseKnownUrls(url: URL) {
 				video = url.pathname.match(YOUTU_BE_REGEX)?.at(0) ?? null;
 			} else if (url.pathname === '/watch') {
 				video = url.searchParams.get('v');
+			} else if (url.pathname === '/live') {
+				video = url.pathname.match(YOUTU_BE_REGEX)?.at(0) ?? null;
 			}
 
 			if (video) {
