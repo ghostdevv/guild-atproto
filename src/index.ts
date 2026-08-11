@@ -1,6 +1,6 @@
 import { intro, outro, group, text, spinner } from '@clack/prompts';
 import { type Handle, isHandle } from '@atcute/lexicons/syntax';
-// import { authenticateWithGuild } from './guild-oauth.ts';
+import { authenticateWithGuild } from './guild-oauth.ts';
 import { exit, selectEvents } from './prompts.ts';
 import { fetchGuildEvents } from './guild.ts';
 import { login } from './oauth.ts';
@@ -17,10 +17,7 @@ import {
 
 intro('Guild ATProto Sync');
 
-// todo, when the api returns the online location when
-// you're authenticated, re-enable this and use it to
-// add the youtube/stream.place links to the atmo event
-// const _guildTokens = await authenticateWithGuild();
+const guildAuth = await authenticateWithGuild();
 
 const GUILD_SLUG_REGEX = /^[a-z0-9-]+$/;
 
@@ -61,7 +58,7 @@ const choices = await group(
 const session = await login(choices.handle as Handle);
 
 const atmoEvents = await fetchAtmoEvents(session.client, session.actor);
-const guildEvents = await fetchGuildEvents(choices.guildSlug);
+const guildEvents = await fetchGuildEvents(choices.guildSlug, guildAuth);
 
 for (const guildEvent of await selectEvents(atmoEvents, guildEvents)) {
 	const s = spinner();

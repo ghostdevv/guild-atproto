@@ -1,3 +1,4 @@
+import type { GuildAuth } from './guild-oauth';
 import { spinner } from '@clack/prompts';
 import * as v from 'valibot';
 
@@ -40,6 +41,8 @@ const GuildEventSchema = v.object({
 	visibility: v.union([v.literal('LISTED'), v.literal('UNLISTED')]),
 	hasVenue: v.boolean(),
 	hasExternalUrl: v.boolean(),
+	// Available when authenticated
+	externalUrl: v.optional(v.string()),
 	createdAt: InstantSchema,
 	uploadedSocialCard: v.nullable(
 		v.object({
@@ -67,7 +70,10 @@ const EventsResponseSchema = v.object({
 	}),
 });
 
-export async function fetchGuildEvents(slug: string): Promise<GuildEvent[]> {
+export async function fetchGuildEvents(
+	slug: string,
+	auth: GuildAuth | null,
+): Promise<GuildEvent[]> {
 	const s = spinner();
 	s.start('Fetching events...');
 
@@ -76,7 +82,10 @@ export async function fetchGuildEvents(slug: string): Promise<GuildEvent[]> {
 		url.pathname += `/${slug}/events`;
 		url.searchParams.set('first', '50');
 
-		const response = await fetch(url);
+		const headers = new Headers();
+		if (auth) headers.set('Authorization', `Bearer ${auth.accessToken}`);
+
+		const response = await fetch(url, { headers });
 
 		if (!response.ok) {
 			throw new Error(`Failed to fetch events: ${response.statusText}`);

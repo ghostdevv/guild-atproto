@@ -49,6 +49,7 @@ const AtmoEventSchema = v.object({
 });
 
 export type AtmoEvent = v.InferOutput<typeof AtmoEventSchema>;
+type EventUri = Required<Exclude<AtmoEvent['uris'], undefined>[number]>;
 
 export async function fetchAtmoEvents(client: Client, repo: Did) {
 	const events: (AtmoEvent & { rkey: RecordKey })[] = [];
@@ -100,6 +101,54 @@ export async function fetchAtmoEvents(client: Client, repo: Did) {
 	return events;
 }
 
+const YOUTU_BE_REGEX = /^\/(shorts\/)?([a-zA-Z0-9\-_]+)$/;
+
+function normaliseKnownUrls(url: URL) {
+	// oxlint-disable-next-line default-case
+	switch (url.hostname) {
+		case 'youtube.com':
+		case 'm.youtube.com':
+		case 'www.youtube.com':
+		case 'youtu.be': {
+			const time = url.searchParams.get('t');
+			let video: string | null = null;
+
+			if (url.hostname === 'youtu.be') {
+				video = url.pathname.match(YOUTU_BE_REGEX)?.at(0) ?? null;
+			} else if (url.pathname === '/watch') {
+				video = url.searchParams.get('v');
+			}
+
+			if (video) {
+				const url = new URL('https://youtube.com/watch');
+				if (time) url.searchParams.set('t', time);
+				url.searchParams.set('v', video);
+				return url;
+			}
+		}
+	}
+
+	return url;
+}
+
+const ALLOWED_EXTERNALS: Record<string, string> = {
+	'youtube.com': 'YouTube',
+	'stream.place': 'Stream Place',
+	'twitch.tv': 'Twitch',
+} as const;
+
+function formatGuildExternalUrl(raw: string): EventUri | null {
+	const url = normaliseKnownUrls(new URL(raw));
+	const externalName = ALLOWED_EXTERNALS[url.hostname];
+	if (!externalName) return null;
+
+	return {
+		$type: 'community.lexicon.calendar.event#uri',
+		name: `Watch on ${externalName}`,
+		uri: raw as EventUri['uri'],
+	};
+}
+
 export async function guildEventToAtmosphere(
 	client: Client,
 	event: GuildEvent,
@@ -114,11 +163,26 @@ export async function guildEventToAtmosphere(
 		mode = 'community.lexicon.calendar.event#hybrid';
 	}
 
-	const guildUri = {
+	const locations =
+		existing?.locations?.filter(
+			(l) => 'uri' in l && l.uri !== event.fullUrl,
+		) ?? [];
+
+	const guildUri: EventUri = {
 		$type: 'community.lexicon.calendar.event#uri' as const,
 		name: 'Register on Guild',
 		uri: event.fullUrl,
 	};
+
+	locations.push(guildUri);
+
+	const externalLocation = event.externalUrl
+		? formatGuildExternalUrl(event.externalUrl)
+		: null;
+
+	if (externalLocation) {
+		locations.push(externalLocation);
+	}
 
 	return {
 		$type: 'community.lexicon.calendar.event',
@@ -130,12 +194,7 @@ export async function guildEventToAtmosphere(
 		mode,
 		timezone: event.timeZone,
 		status: 'community.lexicon.calendar.event#scheduled',
-		locations: [
-			...(existing?.locations?.filter(
-				(l) => 'uri' in l && l.uri !== event.fullUrl,
-			) ?? []),
-			guildUri,
-		],
+		locations,
 		uris: [
 			...(existing?.uris?.filter((u) => u.uri !== event.fullUrl) ?? []),
 			guildUri,

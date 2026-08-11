@@ -15,7 +15,7 @@ const GUILD_REDIRECT_URI =
 	process.env.GUILD_OAUTH_REDIRECT_URI ||
 	'http://localhost:3456/guild-callback';
 
-interface GuildTokensData {
+export interface GuildAuth {
 	accessToken: string;
 	refreshToken: string;
 	expiresAt: number;
@@ -56,7 +56,7 @@ async function generateCodeChallenge(verifier: string): Promise<string> {
 		.replace(BASE64URL_EQUALS_REGEX, '');
 }
 
-export async function authenticateWithGuild(): Promise<GuildTokensData | null> {
+export async function authenticateWithGuild(): Promise<GuildAuth | null> {
 	if (!isConfigured()) {
 		log.warning(
 			'Guild OAuth not configured - set GUILD_OAUTH_CLIENT_ID and GUILD_OAUTH_CLIENT_SECRET env vars',
@@ -88,7 +88,7 @@ export async function authenticateWithGuild(): Promise<GuildTokensData | null> {
 			promise: tokenPromise,
 			resolve: resolveToken,
 			reject: rejectToken,
-		} = Promise.withResolvers<GuildTokensData>();
+		} = Promise.withResolvers<GuildAuth>();
 
 		app.get('/guild-callback', async (c) => {
 			try {
@@ -150,7 +150,7 @@ export async function authenticateWithGuild(): Promise<GuildTokensData | null> {
 					(await tokenResponse.json()) as GuildTokenResponse;
 				const expiresAt = Date.now() + (tokens.expires_in - 60) * 1000;
 
-				const newTokens: GuildTokensData = {
+				const newTokens: GuildAuth = {
 					accessToken: tokens.access_token,
 					refreshToken: tokens.refresh_token,
 					expiresAt,
@@ -210,7 +210,7 @@ export async function authenticateWithGuild(): Promise<GuildTokensData | null> {
 
 async function refreshGuildToken(
 	refreshToken: string,
-): Promise<GuildTokensData | null> {
+): Promise<GuildAuth | null> {
 	if (!isConfigured()) return null;
 
 	try {
@@ -232,7 +232,7 @@ async function refreshGuildToken(
 		const tokens = (await response.json()) as GuildTokenResponse;
 		const expiresAt = Date.now() + (tokens.expires_in - 60) * 1000;
 
-		const newTokens: GuildTokensData = {
+		const newTokens: GuildAuth = {
 			accessToken: tokens.access_token,
 			refreshToken: tokens.refresh_token,
 			expiresAt,
