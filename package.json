@@ -29,7 +29,7 @@
 		"@e18e/eslint-plugin": "^0.6.0",
 		"@rlly/pedantic": "^0.6.0",
 		"@types/node": "^26.1.2",
-		"devalue": "^5.9.0",
+		"devalue": "^5.9.3",
 		"oxlint": "^1.76.0",
 		"oxlint-tsgolint": "^7.0.2001",
 		"prettier": "^3.9.6",
