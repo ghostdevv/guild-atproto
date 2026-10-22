@@ -266,7 +266,9 @@ async function getEventMedia(
 		input: image,
 		headers: {
 			'Content-Type': guildEvent.uploadedSocialCard
-				? 'image/png'
+				? guildEvent.uploadedSocialCard.url.endsWith('png')
+					? 'image/png'
+					: 'image/jpeg'
 				: 'image/svg+xml',
 		},
 	});

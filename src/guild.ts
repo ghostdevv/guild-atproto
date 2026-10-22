@@ -49,7 +49,10 @@ const GuildEventSchema = v.object({
 			url: v.pipe(
 				v.string(),
 				URLSchema,
-				v.check((url) => url.endsWith('png'), 'url is png'),
+				v.check(
+					(url) => url.endsWith('png') || url.endsWith('jpeg'),
+					'url is png or jpg',
+				),
 			),
 		}),
 	),
